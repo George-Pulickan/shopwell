@@ -262,6 +262,61 @@ test('supplier sign-up joins the approval queue; approval unlocks the portal', (
   assert.match(viewText(dom), /Heritage Salad Mix/);
 });
 
+test('supplier can upload a photo for a new listing; shop shows it', async () => {
+  const dom = boot();
+  loginAs(dom, 'greenfield@example.com', 'grow2026');
+  nav(dom, 'supplier');
+  dom.window.__sw.state.portalTab = 'new';
+  dom.window.render();
+
+  // a tiny valid PNG (1×1 transparent pixel)
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    'base64');
+  const file = new dom.window.File([png], 'broccoli.png', { type: 'image/png' });
+  const input = q(dom, '#lphoto');
+  Object.defineProperty(input, 'files', { value: [file] });
+  dom.window.onPhotoPicked(input);
+
+  // FileReader is async — wait for the photo to land in state
+  for (let i = 0; i < 50 && !dom.window.__sw.state.newPhoto; i++) {
+    await new Promise(r => setTimeout(r, 20));
+  }
+  assert.match(dom.window.__sw.state.newPhoto, /^data:image\/png;base64,/);
+  assert.match(q(dom, '#photoPreview').innerHTML, /<img/); // live preview
+
+  fill(dom, '#lname', 'Purple Sprouting Broccoli');
+  fill(dom, '#lunit', '400g');
+  fill(dom, '#lprice', '2.60');
+  fill(dom, '#lstock', '12');
+  fill(dom, '#ldesc', 'Tender stems, best steamed.');
+  submit(dom, 'form[onsubmit="addListing(event)"]');
+
+  const listed = dom.window.__sw.PRODUCTS.find(p => p.name === 'Purple Sprouting Broccoli');
+  assert.match(listed?.img, /^data:image\/png;base64,/);
+  assert.equal(dom.window.__sw.state.newPhoto, null); // cleared after publish
+
+  nav(dom, 'shop');
+  const card = [...dom.window.document.querySelectorAll('#view .product')]
+    .find(el => el.textContent.includes('Purple Sprouting Broccoli'));
+  assert.ok(card, 'new listing should appear in the shop');
+  assert.match(card.querySelector('.art img').src, /^data:image\/png/);
+});
+
+test('photo picker rejects non-image files', () => {
+  const dom = boot();
+  loginAs(dom, 'greenfield@example.com', 'grow2026');
+  nav(dom, 'supplier');
+  dom.window.__sw.state.portalTab = 'new';
+  dom.window.render();
+
+  const file = new dom.window.File(['not an image'], 'notes.txt', { type: 'text/plain' });
+  const input = q(dom, '#lphoto');
+  Object.defineProperty(input, 'files', { value: [file] });
+  dom.window.onPhotoPicked(input);
+  assert.equal(dom.window.__sw.state.newPhoto, null);
+});
+
 test('chatbot only reads orders for the signed-in customer', () => {
   const dom = boot();
   dom.window.toggleChat(true);

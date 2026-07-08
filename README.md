@@ -56,11 +56,11 @@ Sign-up offers two paths: **shop** (instant customer account) or **sell** (creat
 
 ## Testing
 
-`tests/auth.test.mjs` boots the real `index.html` in jsdom and drives it the way a user would — filling forms, submitting them, and asserting on what renders. It covers: sign-in success and failure, all four role guards, order scoping per customer, the full basket → checkout → confirmation flow, customer and supplier sign-up (including validation and persistence across a simulated reload), the supplier approval flow end-to-end, listing a product with a newly approved account, and the chatbot's owner-only order access.
+`tests/auth.test.mjs` boots the real `index.html` in jsdom and drives it the way a user would — filling forms, submitting them, and asserting on what renders. It covers: sign-in success and failure, all four role guards, order scoping per customer, the full basket → checkout → confirmation flow, customer and supplier sign-up (including validation and persistence across a simulated reload), the supplier approval flow end-to-end, listing a product with a newly approved account, the listing photo upload (including rejecting non-image files), and the chatbot's owner-only order access.
 
 ```bash
 npm install
-npm test        # 11 tests, all green
+npm test        # 13 tests, all green
 ```
 
 The CI pipeline runs the same suite on every push, alongside the JavaScript syntax check and the Docker smoke test.
@@ -73,7 +73,7 @@ Every behaviour below traces back to the Requirements Capture Document or a clie
 |---|---|
 | Customers, suppliers and admins each have their own account (FR, Must) | Sign in with any demo account above — the same login page routes each role to its own area, and pages are guarded by role |
 | New customers and suppliers can register (FR, Must) | Create an account → "I want to shop" (instant) or "I want to sell" (application goes to the admin approval queue) |
-| Suppliers create and manage their own listings (FR, Must) | Supplier portal → My listings / ＋ New listing: name, description, price, unit, stock, best-before, ambient/chilled |
+| Suppliers create and manage their own listings (FR, Must) | Supplier portal → My listings / ＋ New listing: name, description, price, unit, stock, best-before, ambient/chilled, and an optional product photo upload with live preview |
 | Stock at zero cannot be ordered (FR, Must / NFR2) | Set any item's stock to 0 in the portal — it shows "Sold out" in the shop instantly and the button disables; quantities are also capped at available stock |
 | Browse and search with filters (FR, Must) | Shop page: search box + category, supplier, dietary-tag and price-per-unit information on every card |
 | Customers see which supplier each item comes from (client answer) | Every product card: "From **Greenfield Organics** · Devon, UK" |
@@ -121,13 +121,13 @@ The prototype chatbot is rule-based so it can run offline, but it is wired the w
 - **Splitting one payment across suppliers.** The order model stores a single paid total but generates independent per-supplier shipments, each with its own status and tracking, and commission is calculated per sale. Getting refunds to adjust the order total, the shipment, and the supplier flag consistently took a dedicated `cantFulfil` routine rather than ad-hoc edits.
 - **Stock integrity (NFR2).** Overselling is blocked in three places: the add-to-basket guard, the quantity stepper cap, and a final check at checkout that then decrements stock — so the shop and portal can never disagree.
 - **A one-character bug.** An apostrophe inside a JavaScript template string broke the whole app; it was caught by running `node --check` on the extracted script — which then became a permanent step in the CI pipeline, a nice example of a bug turning into automation.
-- **Real photos without breaking offline-first.** Hotlinking a photo CDN would break in Docker without internet, so the produce photos are openly licensed images from Wikimedia Commons, downscaled and shipped in the repo (~2 MB total). Brand-new listings fall back to an emoji tile until a photo is added — supplier photo uploads with an approval step remain a production feature.
+- **Real photos without breaking offline-first.** Hotlinking a photo CDN would break in Docker without internet, so the produce photos are openly licensed images from Wikimedia Commons, downscaled and shipped in the repo (~2 MB total). Suppliers can upload their own photo when creating a listing (downscaled in the browser, shown live in the shop); listings without a photo fall back to an emoji tile.
 - **Making login testable.** Form fields were originally read as `form.custname` — fine in every browser, but jsdom (which the automated tests run in) doesn't implement named property access on forms. Switching to the equally standard `form.elements.custname` made the same code work in both, and the tests caught it immediately.
 - **Chatbot scope.** A live LLM needs an API key and network access; a rules engine demos the *integration pattern* (read-only order API, escalation with context) without either, and the production swap is documented above.
 
 ## Future development
 
-Server-side authentication (the prototype's client-side accounts move behind a real API with bcrypt/argon2 and sessions), a database with the REST APIs sketched in the solution map, a real payment-provider integration (e.g. Stripe Connect for split payouts), the LLM-backed chatbot behind the same guardrails, supplier photo uploads with an approval step, per-supplier delivery charges and cut-off times, and — post-launch, as agreed — subscription boxes and international expansion.
+Server-side authentication (the prototype's client-side accounts move behind a real API with bcrypt/argon2 and sessions), a database with the REST APIs sketched in the solution map, a real payment-provider integration (e.g. Stripe Connect for split payouts), the LLM-backed chatbot behind the same guardrails, a moderation/approval step for supplier-uploaded photos (plus storing them server-side rather than in memory), per-supplier delivery charges and cut-off times, and — post-launch, as agreed — subscription boxes and international expansion.
 
 ## Image credits
 
