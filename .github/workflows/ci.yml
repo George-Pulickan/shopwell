@@ -67,7 +67,9 @@ jobs:
       - name: Push image to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          IMAGE=ghcr.io/${{ github.repository }}/shopwell
+          # Docker requires lowercase image names; github.repository can
+          # contain uppercase (e.g. George-Pulickan/shopwell)
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/shopwell
           docker tag shopwell:ci $IMAGE:latest
           docker tag shopwell:ci $IMAGE:${{ github.sha }}
           docker push $IMAGE:latest
