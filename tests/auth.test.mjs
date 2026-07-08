@@ -303,6 +303,35 @@ test('supplier can upload a photo for a new listing; shop shows it', async () =>
   assert.match(card.querySelector('.art img').src, /^data:image\/png/);
 });
 
+test('supplier can change the photo on an existing listing from the table', async () => {
+  const dom = boot();
+  loginAs(dom, 'greenfield@example.com', 'grow2026');
+  nav(dom, 'supplier'); // default tab is My listings
+
+  const input = q(dom, '#photo-p1');
+  assert.ok(input, 'each listing row should have a photo input');
+  assert.match(q(dom, 'label[for="photo-p1"]').textContent, /Change photo/); // p1 already has one
+
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    'base64');
+  const file = new dom.window.File([png], 'carrots-new.png', { type: 'image/png' });
+  Object.defineProperty(input, 'files', { value: [file] });
+  dom.window.onListingPhotoPicked('p1', input);
+
+  const p1 = dom.window.__sw.PRODUCTS.find(p => p.id === 'p1');
+  for (let i = 0; i < 50 && !p1.img.startsWith('data:'); i++) {
+    await new Promise(r => setTimeout(r, 20));
+  }
+  assert.match(p1.img, /^data:image\/png;base64,/);
+
+  // the shop card now uses the uploaded photo
+  nav(dom, 'shop');
+  const card = [...dom.window.document.querySelectorAll('#view .product')]
+    .find(el => el.textContent.includes('Rainbow Carrot Bunch'));
+  assert.match(card.querySelector('.art img').src, /^data:image\/png/);
+});
+
 test('photo picker rejects non-image files', () => {
   const dom = boot();
   loginAs(dom, 'greenfield@example.com', 'grow2026');
