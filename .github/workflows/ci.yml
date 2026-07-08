@@ -1,0 +1,76 @@
+# Shop Well — CI/CD pipeline (Solirius stretch goal 1)
+#
+# What it does on every push / pull request:
+#   1. Checks out the code
+#   2. Syntax-checks the site's JavaScript (fails fast on typos)
+#   3. Builds the Docker image and smoke-tests that it serves the page
+#   4. On pushes to main only: publishes the image to GitHub Container
+#      Registry (GHCR) so it can be pulled anywhere — the first half
+#      of stretch goal 2 (cloud deployment).
+
+name: build-and-publish
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # needed to push to GHCR
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Syntax-check inline JavaScript
+        run: |
+          python3 - <<'EOF'
+          import re
+          html = open('index.html').read()
+          js = '\n'.join(re.findall(r'<script>(.*?)</script>', html, re.S))
+          open('app.js','w').write(js)
+          EOF
+          node --check app.js
+          echo "JavaScript OK"
+
+      - name: Build Docker image
+        run: docker build -t shopwell:ci .
+
+      - name: Smoke test — container serves the homepage
+        run: |
+          docker run -d --rm -p 8080:80 --name shopwell shopwell:ci
+          sleep 2
+          curl -sf http://localhost:8080 | grep -q "Shop Well" && echo "Site is up"
+          docker stop shopwell
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}/shopwell
+          docker tag shopwell:ci $IMAGE:latest
+          docker tag shopwell:ci $IMAGE:${{ github.sha }}
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}
+
+# ---------------------------------------------------------------
+# Stretch goal 2 — deploying the published image to the cloud:
+# any container host can now pull ghcr.io/<owner>/<repo>/shopwell.
+# Typical one-liners from a cloud console:
+#   Azure:  az container create --image ghcr.io/...:latest --ports 80 ...
+#   AWS:    App Runner / ECS task pointing at the GHCR image
+#   GCP:    Cloud Run service from the image (map port 80)
+# The image is self-contained, so no environment variables or
+# databases are needed for the prototype.
+# ---------------------------------------------------------------

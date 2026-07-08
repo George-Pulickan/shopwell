@@ -1,0 +1,16 @@
+flowchart TD
+  A["Supplier applies to sell on Shop Well"] --> B["Admin vets application:<br/>organic certification, food safety,<br/>shipping capability (customs check if outside UK)"]
+  B --> C{"Approved?"}
+  C -- "No" --> R["Rejected with reasons"]
+  C -- "Yes" --> D["Portal access granted"]
+  D --> E["Create and edit listings:<br/>name, description, image, price per unit,<br/>stock, best-before, ambient or chilled shipping"]
+  E --> F["Listings live in the customer shop"]
+  F --> G["Keep stock accurate —<br/>stock at zero hides the item instantly<br/>so customers can never oversell it"]
+  G --> H["Order arrives — notified in portal and by email<br/>with only their items, quantities and delivery details"]
+  H --> I{"Can fulfil every item?"}
+  I -- "Yes" --> J["Pick and pack — mark Packed"]
+  J --> K["Ship — add tracking number,<br/>customer notified automatically"]
+  K --> L["Mark Delivered"]
+  I -- "No" --> M["Mark item as cannot fulfil:<br/>customer auto-refunded for that item,<br/>rest of the order unaffected"]
+  M --> P["Repeated failures flagged<br/>for admin review"]
+  L --> O["Payout received:<br/>item total minus 10% Shop Well commission"]

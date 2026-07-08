@@ -1,0 +1,54 @@
+flowchart LR
+  subgraph Users["People"]
+    CU["Customer"]
+    SU["Supplier"]
+    AD["Shop Well admin"]
+    CS["Customer Care team"]
+  end
+
+  subgraph WebApp["Shop Well web app — responsive, WCAG accessible"]
+    LP["Landing page"]
+    SH["Customer shop:<br/>catalogue, basket,<br/>checkout, order tracking"]
+    SP["Supplier portal:<br/>listings, stock,<br/>orders, payouts"]
+    AC["Admin console:<br/>approvals, orders,<br/>refunds, flags"]
+  end
+
+  subgraph Core["Core platform services"]
+    CAT["Catalogue and search"]
+    ORD["Order service:<br/>one payment split<br/>into per-supplier shipments"]
+    STK["Stock service —<br/>prevents overselling"]
+    ACC["Accounts and sign-in"]
+    NOT["Notifications"]
+    DB[("Platform database:<br/>products, orders,<br/>users, suppliers")]
+  end
+
+  subgraph External["External integrations"]
+    PAY["Payment provider —<br/>card data never<br/>touches Shop Well"]
+    COUR["Courier tracking APIs"]
+    MAIL["Transactional email"]
+    BOT["AI chatbot +<br/>knowledge base:<br/>FAQs, policies"]
+  end
+
+  CU --> LP
+  CU --> SH
+  SU --> SP
+  AD --> AC
+  SH --> CAT
+  SH --> ORD
+  SP --> STK
+  SP --> ORD
+  AC --> ORD
+  AC --> ACC
+  CAT --> DB
+  ORD --> DB
+  STK --> DB
+  ACC --> DB
+  ORD --> PAY
+  ORD --> NOT
+  NOT --> MAIL
+  COUR --> ORD
+  CU -. "asks for help" .-> BOT
+  SU -. "asks for help" .-> BOT
+  BOT -. "read-only order,<br/>delivery and policy APIs" .-> ORD
+  BOT -. "escalates with full<br/>conversation context" .-> CS
+  CS --> ORD

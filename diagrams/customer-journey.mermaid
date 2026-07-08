@@ -1,0 +1,18 @@
+flowchart TD
+  A["Visit Shop Well landing page"] --> B["Browse and search catalogue<br/>filter by category, supplier, price, dietary tags"]
+  B --> C["View product<br/>supplier name, price, stock and best-before shown"]
+  C --> D{"In stock?"}
+  D -- "No" --> D2["Shown as sold out —<br/>cannot be added to basket"] --> B
+  D -- "Yes" --> E["Add to basket<br/>one basket across all suppliers"]
+  E --> F["Review basket<br/>grouped by supplier with subtotals"]
+  F --> G["Checkout — delivery details<br/>account or guest (guest TBC with client)"]
+  G --> H["Pay once via third-party payment provider<br/>card details never stored by Shop Well"]
+  H --> I["Order confirmed<br/>payment split per supplier, 10% commission retained"]
+  I --> J["Each supplier notified<br/>with only their items and delivery details"]
+  J --> K["Suppliers pick, pack and ship independently"]
+  K --> L{"Supplier cannot fulfil an item?"}
+  L -- "Yes" --> M["Item auto-refunded and customer notified;<br/>rest of order continues; supplier flagged to admin"] --> N
+  L -- "No" --> N["Customer tracks each shipment<br/>Placed to Packed to Shipped to Delivered"]
+  N --> O["All shipments delivered"]
+  N -.-> P["Shop Well Assist chatbot<br/>live order status, delivery info, FAQs"]
+  P -.-> Q["Escalates to Customer Care with full<br/>conversation context — refunds, complaints,<br/>or when the chatbot is unsure"]
