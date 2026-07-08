@@ -5,9 +5,10 @@
 
 FROM nginx:1.27-alpine
 
-# The whole prototype is one self-contained file (HTML + CSS + JS),
-# so the image stays tiny (~50 MB) and needs no build step.
+# One HTML file (HTML + CSS + JS) plus the produce photos —
+# still no build step, and the image stays small.
 COPY index.html /usr/share/nginx/html/index.html
+COPY images/ /usr/share/nginx/html/images/
 
 EXPOSE 80
 

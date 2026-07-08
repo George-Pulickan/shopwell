@@ -107,7 +107,8 @@ h1 em{font-style:italic;color:var(--beet)}
 .crate .tile:nth-child(2){transform:rotate(2.5deg)}
 .crate .tile:nth-child(4){transform:rotate(-2deg)}
 .crate .tile:nth-child(6){transform:rotate(1.5deg)}
-.tile{aspect-ratio:1;border-radius:16px;display:grid;place-items:center;font-size:2.6rem;animation:pop .5s ease both}
+.tile{aspect-ratio:1;border-radius:16px;display:grid;place-items:center;font-size:2.6rem;animation:pop .5s ease both;overflow:hidden}
+.tile img{width:100%;height:100%;object-fit:cover;display:block}
 .tile small{font-size:.7rem;font-weight:700;color:var(--pine);margin-top:-6px}
 .tile:nth-child(1){animation-delay:.05s}.tile:nth-child(2){animation-delay:.12s}.tile:nth-child(3){animation-delay:.19s}
 .tile:nth-child(4){animation-delay:.26s}.tile:nth-child(5){animation-delay:.33s}.tile:nth-child(6){animation-delay:.4s}
@@ -140,7 +141,9 @@ h2{font-family:var(--font-display);font-weight:600;font-size:1.9rem;color:var(--
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.2rem}
 .product{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .15s ease}
 .product:hover{transform:translateY(-3px)}
-.product .art{height:130px;display:grid;place-items:center;font-size:3.2rem}
+.product .art{height:130px;display:grid;place-items:center;font-size:3.2rem;overflow:hidden}
+.product .art img{width:100%;height:100%;object-fit:cover;display:block}
+img.pthumb{width:36px;height:36px;object-fit:cover;border-radius:8px;flex:none;display:inline-block;vertical-align:middle}
 .product .body{padding:.9rem 1rem 1.1rem;display:flex;flex-direction:column;gap:.35rem;flex:1}
 .product h3{font-size:1.03rem}
 .product .from{font-size:.82rem;color:var(--ink-soft)}
@@ -192,6 +195,28 @@ tr:hover td{background:#FAFBF7}
 .stat .l{font-size:.82rem;color:var(--ink-soft);font-weight:600}
 .inline-input{width:76px !important;padding:.3rem .5rem !important;text-align:center}
 .notice{background:var(--butter-soft);border:1px solid #E8CD86;border-radius:10px;padding:.7rem .9rem;font-size:.9rem;margin-bottom:1rem}
+
+/* ---------- Auth (login / sign-up) ---------- */
+.auth-wrap{max-width:28rem;margin:1.6rem auto 0}
+.auth-wrap .card{padding:1.7rem}
+.auth-wrap form > div{margin-bottom:.85rem}
+.auth-switch{text-align:center;margin-top:1rem;font-size:.93rem}
+.form-err{background:#F4DADA;color:var(--danger);border-radius:10px;padding:.55rem .85rem;font-size:.9rem;margin-bottom:.9rem;display:none}
+.form-err.show{display:block}
+input[type=password]{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:.6rem .8rem;background:#fff}
+.role-tabs{display:flex;gap:.5rem;margin-bottom:1.1rem}
+.role-tabs button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:.55rem .6rem;font-weight:600;color:var(--ink-soft)}
+.role-tabs button.on{background:var(--pine);border-color:var(--pine);color:#fff}
+.demo-creds{margin-top:1rem;font-size:.88rem}
+.demo-creds table{box-shadow:none;border:1px solid var(--line)}
+.demo-creds th{padding:.4rem .6rem;font-size:.82rem}
+.demo-creds td{padding:.4rem .6rem}
+.nav-auth{display:flex;align-items:center;gap:.3rem}
+.nav-auth a{color:#EAF2EA;text-decoration:none;padding:.45rem .8rem;border-radius:999px;font-weight:600;font-size:.95rem;border:1.5px solid rgba(255,255,255,.4)}
+.nav-auth a:hover{background:rgba(255,255,255,.12)}
+.nav-auth .who{color:var(--butter);font-weight:700;font-size:.92rem;padding:.3rem .4rem;white-space:nowrap}
+.nav-auth button{background:transparent;border:0;color:#EAF2EA;font-weight:600;font-size:.88rem;padding:.4rem .5rem;border-radius:999px}
+.nav-auth button:hover{background:rgba(255,255,255,.12)}
 
 /* ---------- Chatbot ---------- */
 .chat-fab{position:fixed;right:20px;bottom:20px;z-index:90;background:var(--beet);color:#fff;border:0;border-radius:999px;padding:.8rem 1.25rem;font-weight:700;box-shadow:0 8px 24px rgba(126,27,61,.35);display:flex;align-items:center;gap:.5rem}
@@ -259,6 +284,7 @@ footer .base{border-top:1px solid rgba(255,255,255,.15);padding:1rem 0;font-size
       <a href="#supplier" data-nav="supplier">Supplier portal</a>
       <a href="#admin" data-nav="admin">Admin</a>
     </nav>
+    <span class="nav-auth" id="navAuth"></span>
     <button class="basket-btn" onclick="go('basket')" aria-label="Open basket">
       Basket <span class="count" id="basketCount">0</span>
     </button>
@@ -333,38 +359,71 @@ const SUPPLIERS = [
   {id:'s5', name:'Nordisk Roots', region:'Copenhagen, DK', face:'🥕', status:'pending', lead:'—', bio:'Applied 04 Jul — organic certification under review. EU shipping raises customs and delivery-time questions.', flags:0},
 ];
 
+// Product photos live in images/ — sourced from Wikimedia Commons
+// (openly licensed; full credits in the README).
 const PRODUCTS = [
-  {id:'p1', sup:'s1', name:'Rainbow Carrot Bunch', emoji:'🥕', cat:'Vegetables', price:2.40, unit:'bunch', stock:24, best:'5 days', ship:'Ambient', tags:['Organic','Vegan'], desc:'Purple, orange and gold heritage carrots, tops on.'},
-  {id:'p2', sup:'s1', name:'Cavolo Nero', emoji:'🥬', cat:'Vegetables', price:1.95, unit:'200g', stock:3, best:'4 days', ship:'Chilled', tags:['Organic','Vegan'], desc:'Dark Tuscan kale, cut the morning it ships.'},
-  {id:'p3', sup:'s1', name:'Vine Tomatoes', emoji:'🍅', cat:'Vegetables', price:3.10, unit:'500g', stock:18, best:'6 days', ship:'Ambient', tags:['Organic','Vegan'], desc:'Slow-ripened on the vine in unheated polytunnels.'},
-  {id:'p4', sup:'s1', name:'Maris Piper Potatoes', emoji:'🥔', cat:'Vegetables', price:2.80, unit:'2kg', stock:40, best:'3 weeks', ship:'Ambient', tags:['Organic','Vegan'], desc:'Floury all-rounders, unwashed to keep longer.'},
-  {id:'p5', sup:'s2', name:'Discovery Apples', emoji:'🍎', cat:'Fruit', price:3.40, unit:'6 pack', stock:30, best:'2 weeks', ship:'Ambient', tags:['Organic','Vegan'], desc:'First of the season — crisp, sharp, faintly strawberry.'},
-  {id:'p6', sup:'s2', name:'Kentish Strawberries', emoji:'🍓', cat:'Fruit', price:4.25, unit:'400g', stock:0, best:'2 days', ship:'Chilled', tags:['Organic','Vegan'], desc:'Picked ripe, never chilled below 4°C. Back Thursday.'},
-  {id:'p7', sup:'s2', name:'Conference Pears', emoji:'🍐', cat:'Fruit', price:3.05, unit:'4 pack', stock:22, best:'1 week', ship:'Ambient', tags:['Organic','Vegan'], desc:'Ready in 2–3 days on the windowsill.'},
-  {id:'p8', sup:'s3', name:'Organic Whole Milk', emoji:'🥛', cat:'Dairy & Eggs', price:1.65, unit:'1L', stock:26, best:'7 days', ship:'Chilled', tags:['Organic'], desc:'Pasteurised, non-homogenised — shake before pouring.'},
-  {id:'p9', sup:'s3', name:'Free-Range Eggs', emoji:'🥚', cat:'Dairy & Eggs', price:2.95, unit:'6 large', stock:35, best:'3 weeks', ship:'Ambient', tags:['Organic'], desc:'From a 120-hen flock on clover pasture.'},
-  {id:'p10', sup:'s3', name:'Farmhouse Butter', emoji:'🧈', cat:'Dairy & Eggs', price:3.60, unit:'250g', stock:6, best:'1 month', ship:'Chilled', tags:['Organic'], desc:'Churned weekly, lightly salted.'},
-  {id:'p11', sup:'s4', name:'Stoneground Bread Flour', emoji:'🌾', cat:'Pantry', price:4.15, unit:'1.5kg', stock:50, best:'6 months', ship:'Ambient', tags:['Organic','Vegan'], desc:'Strong white flour from Norfolk wheat.'},
-  {id:'p12', sup:'s4', name:'Jumbo Porridge Oats', emoji:'🥣', cat:'Pantry', price:2.55, unit:'1kg', stock:44, best:'8 months', ship:'Ambient', tags:['Organic','Vegan','Gluten-free'], desc:'Rolled thick; certified gluten-free milling line.'},
-  {id:'p13', sup:'s4', name:'Cold-Pressed Rapeseed Oil', emoji:'🫙', cat:'Pantry', price:5.90, unit:'500ml', stock:15, best:'1 year', ship:'Ambient', tags:['Organic','Vegan'], desc:'Nutty, golden, single-field pressing.'},
-  {id:'p14', sup:'s2', name:'Blackcurrant Cordial', emoji:'🍇', cat:'Pantry', price:4.80, unit:'500ml', stock:12, best:'9 months', ship:'Ambient', tags:['Organic','Vegan'], desc:'Pressed fruit, light on sugar. Dilute 1:6.'},
+  {id:'p1', sup:'s1', name:'Rainbow Carrot Bunch', emoji:'🥕', img:'images/carrots.jpg', cat:'Vegetables', price:2.40, unit:'bunch', stock:24, best:'5 days', ship:'Ambient', tags:['Organic','Vegan'], desc:'Purple, orange and gold heritage carrots, tops on.'},
+  {id:'p2', sup:'s1', name:'Cavolo Nero', emoji:'🥬', img:'images/cavolo-nero.jpg', cat:'Vegetables', price:1.95, unit:'200g', stock:3, best:'4 days', ship:'Chilled', tags:['Organic','Vegan'], desc:'Dark Tuscan kale, cut the morning it ships.'},
+  {id:'p3', sup:'s1', name:'Vine Tomatoes', emoji:'🍅', img:'images/tomatoes.jpg', cat:'Vegetables', price:3.10, unit:'500g', stock:18, best:'6 days', ship:'Ambient', tags:['Organic','Vegan'], desc:'Slow-ripened on the vine in unheated polytunnels.'},
+  {id:'p4', sup:'s1', name:'Maris Piper Potatoes', emoji:'🥔', img:'images/potatoes.jpg', cat:'Vegetables', price:2.80, unit:'2kg', stock:40, best:'3 weeks', ship:'Ambient', tags:['Organic','Vegan'], desc:'Floury all-rounders, unwashed to keep longer.'},
+  {id:'p5', sup:'s2', name:'Discovery Apples', emoji:'🍎', img:'images/apples.jpg', cat:'Fruit', price:3.40, unit:'6 pack', stock:30, best:'2 weeks', ship:'Ambient', tags:['Organic','Vegan'], desc:'First of the season — crisp, sharp, faintly strawberry.'},
+  {id:'p6', sup:'s2', name:'Kentish Strawberries', emoji:'🍓', img:'images/strawberries.jpg', cat:'Fruit', price:4.25, unit:'400g', stock:0, best:'2 days', ship:'Chilled', tags:['Organic','Vegan'], desc:'Picked ripe, never chilled below 4°C. Back Thursday.'},
+  {id:'p7', sup:'s2', name:'Conference Pears', emoji:'🍐', img:'images/pears.jpg', cat:'Fruit', price:3.05, unit:'4 pack', stock:22, best:'1 week', ship:'Ambient', tags:['Organic','Vegan'], desc:'Ready in 2–3 days on the windowsill.'},
+  {id:'p8', sup:'s3', name:'Organic Whole Milk', emoji:'🥛', img:'images/milk.jpg', cat:'Dairy & Eggs', price:1.65, unit:'1L', stock:26, best:'7 days', ship:'Chilled', tags:['Organic'], desc:'Pasteurised, non-homogenised — shake before pouring.'},
+  {id:'p9', sup:'s3', name:'Free-Range Eggs', emoji:'🥚', img:'images/eggs.jpg', cat:'Dairy & Eggs', price:2.95, unit:'6 large', stock:35, best:'3 weeks', ship:'Ambient', tags:['Organic'], desc:'From a 120-hen flock on clover pasture.'},
+  {id:'p10', sup:'s3', name:'Farmhouse Butter', emoji:'🧈', img:'images/butter.jpg', cat:'Dairy & Eggs', price:3.60, unit:'250g', stock:6, best:'1 month', ship:'Chilled', tags:['Organic'], desc:'Churned weekly, lightly salted.'},
+  {id:'p11', sup:'s4', name:'Stoneground Bread Flour', emoji:'🌾', img:'images/flour.jpg', cat:'Pantry', price:4.15, unit:'1.5kg', stock:50, best:'6 months', ship:'Ambient', tags:['Organic','Vegan'], desc:'Strong white flour from Norfolk wheat.'},
+  {id:'p12', sup:'s4', name:'Jumbo Porridge Oats', emoji:'🥣', img:'images/oats.jpg', cat:'Pantry', price:2.55, unit:'1kg', stock:44, best:'8 months', ship:'Ambient', tags:['Organic','Vegan','Gluten-free'], desc:'Rolled thick; certified gluten-free milling line.'},
+  {id:'p13', sup:'s4', name:'Cold-Pressed Rapeseed Oil', emoji:'🫙', img:'images/rapeseed-oil.jpg', cat:'Pantry', price:5.90, unit:'500ml', stock:15, best:'1 year', ship:'Ambient', tags:['Organic','Vegan'], desc:'Nutty, golden, single-field pressing.'},
+  {id:'p14', sup:'s2', name:'Blackcurrant Cordial', emoji:'🍇', img:'images/blackcurrant.jpg', cat:'Pantry', price:4.80, unit:'500ml', stock:12, best:'9 months', ship:'Ambient', tags:['Organic','Vegan'], desc:'Pressed fruit, light on sugar. Dilute 1:6.'},
 ];
 
 const COMMISSION = 0.10; // Shop Well marketplace fee (client: fixed % per order)
-const CUSTOMER = {name:'Alex Morgan', email:'alex.morgan@example.com'};
+
+// ---------- Accounts ----------
+// Prototype auth: passwords are stored as a quick FNV-1a hash so plain
+// text never sits in localStorage. Production would use a server with
+// bcrypt/argon2 — this stands in for that flow, same shapes, same rules.
+function pwHash(s){
+  let h = 0x811c9dc5;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return 'h' + h.toString(16);
+}
+const USERS = [
+  {name:'Alex Morgan',         email:'alex.morgan@example.com',   pass:pwHash('veg4life'),      role:'customer'},
+  {name:'Greenfield Organics', email:'greenfield@example.com',    pass:pwHash('grow2026'),      role:'supplier', sup:'s1'},
+  {name:'Riverbank Fruit Co.', email:'riverbank@example.com',     pass:pwHash('grow2026'),      role:'supplier', sup:'s2'},
+  {name:'Hollow Oak Dairy',    email:'hollowoak@example.com',     pass:pwHash('grow2026'),      role:'supplier', sup:'s3'},
+  {name:'The Grain Barn',      email:'grainbarn@example.com',     pass:pwHash('grow2026'),      role:'supplier', sup:'s4'},
+  {name:'Shop Well Ops',       email:'admin@shopwell.example',    pass:pwHash('marketday2026'), role:'admin'},
+];
+
+// Accounts created through sign-up survive a reload via localStorage;
+// the rest of the prototype data stays in memory, as before.
+function store(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function unstore(key){ try{ return JSON.parse(localStorage.getItem(key)); }catch(e){ return null; } }
+function loadRegistry(){
+  (unstore('sw_reg_suppliers')||[]).forEach(s=>{ if(!supp(s.id)) SUPPLIERS.push(s); });
+  (unstore('sw_reg_users')||[]).forEach(u=>{ if(!findUser(u.email)) USERS.push(u); });
+}
+function saveRegistry(){
+  store('sw_reg_users', USERS.filter(u=>u.registered));
+  store('sw_reg_suppliers', SUPPLIERS.filter(s=>s.registered));
+}
+function findUser(email){ return USERS.find(u=>u.email.toLowerCase()===String(email).toLowerCase()); }
 
 // Seeded orders so account / portal / admin / chatbot have live material
 let ORDER_SEQ = 1043;
 const ORDERS = [
   {
-    id:'SW-1041', date:'03 Jul 2026', customer:CUSTOMER.name, total:12.75,
+    id:'SW-1041', date:'03 Jul 2026', customer:'Alex Morgan', email:'alex.morgan@example.com', total:12.75,
     shipments:[
       {sup:'s1', status:'Delivered', tracking:'RM-88231-GB', items:[{p:'p3',q:1,price:3.10},{p:'p4',q:1,price:2.80}]},
       {sup:'s3', status:'Delivered', tracking:'DPD-51120-GB', items:[{p:'p8',q:2,price:1.65},{p:'p9',q:1,price:2.95}]},
     ], notes:[]
   },
   {
-    id:'SW-1042', date:'06 Jul 2026', customer:CUSTOMER.name, total:15.05,
+    id:'SW-1042', date:'06 Jul 2026', customer:'Alex Morgan', email:'alex.morgan@example.com', total:15.05,
     shipments:[
       {sup:'s2', status:'Shipped', tracking:'EVRI-20458-GB', items:[{p:'p5',q:1,price:3.40},{p:'p7',q:1,price:3.05}]},
       {sup:'s4', status:'Packed', tracking:null, items:[{p:'p11',q:1,price:4.15},{p:'p12',q:1,price:2.55}]},
@@ -378,13 +437,16 @@ const state = {
   basket:{},                 // productId -> qty
   view:'home',
   filters:{q:'', cat:'All', sup:'All', tag:'All'},
-  portalSupplier:'s1',
   portalTab:'listings',
   adminTab:'approvals',
   lastOrderId:null,
   chatOpen:false,
   chatMisses:0,
   chatMode:'customer',
+  user:null,                 // signed-in account (customer / supplier / admin)
+  authNext:null,             // view to return to after signing in
+  authMsg:null,              // why the user was sent to the login page
+  signupRole:'customer',
 };
 
 // ---------- Utilities ----------
@@ -435,6 +497,89 @@ function setQty(id, q){
 }
 function updateBasketCount(){ $('#basketCount').textContent = basketQty(); }
 
+// ---------- Auth actions ----------
+function setSession(u){
+  state.user = u;
+  store('sw_session', u ? u.email : null);
+}
+function restoreSession(){
+  const email = unstore('sw_session');
+  if(email) state.user = findUser(email) || null;
+}
+function formErr(sel, msg){
+  const e = $(sel);
+  e.textContent = msg; e.classList.add('show');
+}
+function login(ev){
+  ev.preventDefault();
+  const f = ev.target;
+  const u = findUser(f.elements.email.value.trim());
+  if(!u || u.pass !== pwHash(f.elements.pass.value)){
+    formErr('#loginErr', 'That email and password don’t match an account. Check the demo accounts below, or create a new one.');
+    return;
+  }
+  setSession(u);
+  const dest = state.authNext || {customer:'shop', supplier:'supplier', admin:'admin'}[u.role];
+  state.authNext = null; state.authMsg = null;
+  toast('Signed in as '+u.name);
+  if(location.hash === '#'+dest) render(); else go(dest);
+}
+function logout(){
+  const name = state.user ? state.user.name : '';
+  setSession(null);
+  state.authNext = null; state.authMsg = null;
+  toast(name+' signed out');
+  if(location.hash === '#home' || location.hash === '') render(); else go('home');
+}
+function setSignupRole(r){ state.signupRole = r; render(); }
+function signup(ev){
+  ev.preventDefault();
+  const f = ev.target;
+  if(f.reportValidity && !f.reportValidity()) return;
+  const email = f.elements.email.value.trim();
+  if(findUser(email)){ formErr('#signupErr','That email already has an account — try signing in instead.'); return; }
+  if(f.elements.pass.value.length < 8){ formErr('#signupErr','Password needs to be at least 8 characters.'); return; }
+  if(f.elements.pass.value !== f.elements.pass2.value){ formErr('#signupErr','The two passwords don’t match.'); return; }
+  let user;
+  if(state.signupRole === 'supplier'){
+    // New suppliers join the same approval queue the admin console
+    // already manages — they can sign in, but can't list until approved.
+    const sup = {
+      id:'su'+Date.now().toString(36), name:f.elements.bizname.value, region:f.elements.region.value,
+      face:'🧑‍🌾', status:'pending', lead:'1–3 days',
+      bio:'Applied via sign-up — '+(f.elements.bio.value || 'organic certification under review.'),
+      flags:0, registered:true
+    };
+    SUPPLIERS.push(sup);
+    user = {name:f.elements.bizname.value, email, pass:pwHash(f.elements.pass.value), role:'supplier', sup:sup.id, registered:true};
+  } else {
+    user = {name:f.elements.custname.value, email, pass:pwHash(f.elements.pass.value), role:'customer', registered:true};
+  }
+  USERS.push(user);
+  saveRegistry();
+  setSession(user);
+  const dest = state.authNext || (user.role==='supplier' ? 'supplier' : 'shop');
+  state.authNext = null; state.authMsg = null;
+  toast(user.role==='supplier'
+    ? 'Account created — your application is with the Shop Well team'
+    : 'Welcome to Shop Well, '+user.name.split(' ')[0]+'!');
+  if(location.hash === '#'+dest) render(); else go(dest);
+}
+
+// ---------- Product artwork ----------
+// Real photos where we have them; emoji tile as the fallback for
+// brand-new listings that don't have a photo yet.
+function prodArt(p, tint){
+  return p.img
+    ? `<img src="${p.img}" alt="" loading="lazy">`
+    : p.emoji;
+}
+function prodThumb(p){
+  return p.img
+    ? `<img class="pthumb" src="${p.img}" alt="" loading="lazy">`
+    : `<span aria-hidden="true">${p.emoji}</span>`;
+}
+
 // ---------- Checkout ----------
 function placeOrder(ev){
   ev.preventDefault();
@@ -452,8 +597,8 @@ function placeOrder(ev){
     items:lines.map(({p,q})=>({p:p.id,q,price:p.price}))
   }));
   const order = {
-    id:'SW-'+(ORDER_SEQ++), date:'07 Jul 2026', customer:f.custname.value,
-    total:basketTotal(), shipments, notes:[]
+    id:'SW-'+(ORDER_SEQ++), date:'07 Jul 2026', customer:f.elements.custname.value,
+    email:state.user.email, total:basketTotal(), shipments, notes:[]
   };
   ORDERS.push(order);
   state.lastOrderId = order.id;
@@ -485,11 +630,11 @@ function addListing(ev){
   const f = ev.target;
   if(!f.reportValidity()) return;
   PRODUCTS.push({
-    id:'p'+(PRODUCTS.length+1), sup:state.portalSupplier,
-    name:f.lname.value, emoji:f.lemoji.value||'🧺', cat:f.lcat.value,
-    price:parseFloat(f.lprice.value), unit:f.lunit.value,
-    stock:parseInt(f.lstock.value,10), best:f.lbest.value||'—',
-    ship:f.lship.value, tags:['Organic'], desc:f.ldesc.value
+    id:'px'+Date.now().toString(36), sup:state.user.sup,
+    name:f.elements.lname.value, emoji:f.elements.lemoji.value||'🧺', cat:f.elements.lcat.value,
+    price:parseFloat(f.elements.lprice.value), unit:f.elements.lunit.value,
+    stock:parseInt(f.elements.lstock.value,10), best:f.elements.lbest.value||'—',
+    ship:f.elements.lship.value, tags:['Organic'], desc:f.elements.ldesc.value
   });
   toast('Listing published — live in the shop now');
   f.reset(); render();
@@ -528,6 +673,7 @@ function cantFulfil(orderId, supId, pid){
 function approveSupplier(id, ok){
   const s = supp(id);
   s.status = ok ? 'approved' : 'rejected';
+  if(s.registered) saveRegistry(); // sign-up suppliers keep their status across reloads
   toast(ok ? s.name+' approved — they can now list produce' : s.name+' rejected');
   render();
 }
@@ -536,18 +682,102 @@ function approveSupplier(id, ok){
 function go(view){ location.hash = view; }
 window.addEventListener('hashchange', ()=>{ state.view = location.hash.replace('#','')||'home'; render(); });
 
+// Views that need an account, and which kind. Anyone hitting one of
+// these signed out (or with the wrong kind of account) lands on the
+// login page and is sent back to where they were heading afterwards.
+const GUARDS = {
+  account:      ['customer', 'Sign in to see your orders.'],
+  checkout:     ['customer', 'Sign in (or create an account) to check out — your basket is safe.'],
+  confirmation: ['customer', 'Sign in to see your order confirmation.'],
+  supplier:     ['supplier', 'The supplier portal needs a supplier account.'],
+  admin:        ['admin',    'The admin console needs a Shop Well admin account.'],
+};
 function render(){
-  const v = state.view;
+  let v = state.view;
+  const guard = GUARDS[v];
+  if(guard && (!state.user || state.user.role !== guard[0])){
+    state.authNext = v;
+    state.authMsg = guard[1];
+    v = 'login';
+  }
+  $('#navAuth').innerHTML = state.user
+    ? `<span class="who">👤 ${esc(state.user.name)}</span><button onclick="logout()">Sign out</button>`
+    : `<a href="#login" data-nav="login">Sign in</a>`;
   document.querySelectorAll('[data-nav]').forEach(a=>{
     a.classList.toggle('active', a.dataset.nav===v || (v==='home'&&a.dataset.nav==='home'));
   });
   const views = {home:vHome, shop:vShop, basket:vBasket, checkout:vCheckout,
-                 confirmation:vConfirmation, account:vAccount, supplier:vSupplier, admin:vAdmin};
+                 confirmation:vConfirmation, account:vAccount, supplier:vSupplier, admin:vAdmin,
+                 login:vLogin, signup:vSignup};
   $('#view').innerHTML = (views[v]||vHome)();
   window.scrollTo({top:0, behavior:'auto'});
 }
 
 // ---------- Views ----------
+function vLogin(){
+  return `
+  <section><div class="auth-wrap">
+    ${state.authMsg ? `<div class="notice">🔒 ${esc(state.authMsg)}</div>` : ''}
+    <div class="card">
+      <h2 style="margin-bottom:.2rem">Sign in</h2>
+      <p class="fine" style="margin-bottom:1.1rem">One door for everyone — customers, suppliers and the Shop Well team. Your account decides what you see.</p>
+      <div class="form-err" id="loginErr" role="alert"></div>
+      <form onsubmit="login(event)">
+        <div><label for="liemail">Email</label><input id="liemail" name="email" type="email" autocomplete="username" required></div>
+        <div><label for="lipass">Password</label><input id="lipass" name="pass" type="password" autocomplete="current-password" required></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:.3rem" type="submit">Sign in</button>
+      </form>
+      <p class="auth-switch">New to Shop Well? <a href="#signup">Create an account</a> — shop, or apply to sell.</p>
+    </div>
+    <div class="card demo-creds">
+      <h3 style="margin-bottom:.5rem">Demo accounts</h3>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Role</th><th>Email</th><th>Password</th></tr></thead>
+        <tbody>
+          <tr><td>Customer</td><td class="mono">alex.morgan@example.com</td><td class="mono">veg4life</td></tr>
+          <tr><td>Supplier</td><td class="mono">greenfield@example.com</td><td class="mono">grow2026</td></tr>
+          <tr><td>Supplier</td><td class="mono">riverbank@example.com</td><td class="mono">grow2026</td></tr>
+          <tr><td>Admin</td><td class="mono">admin@shopwell.example</td><td class="mono">marketday2026</td></tr>
+        </tbody>
+      </table></div>
+      <p class="fine" style="margin-top:.5rem">Listed here for the demo only — hollowoak@ and grainbarn@ (same password) sign in to the other two portals.</p>
+    </div>
+  </div></section>`;
+}
+
+function vSignup(){
+  const role = state.signupRole;
+  return `
+  <section><div class="auth-wrap">
+    <div class="card">
+      <h2 style="margin-bottom:.2rem">Create an account</h2>
+      <p class="fine" style="margin-bottom:1.1rem">Shop the marketplace, or apply to sell on it.</p>
+      <div class="role-tabs" role="tablist" aria-label="Account type">
+        <button type="button" class="${role==='customer'?'on':''}" onclick="setSignupRole('customer')">🧺 I want to shop</button>
+        <button type="button" class="${role==='supplier'?'on':''}" onclick="setSignupRole('supplier')">🚜 I want to sell</button>
+      </div>
+      <div class="form-err" id="signupErr" role="alert"></div>
+      <form onsubmit="signup(event)">
+        ${role==='customer' ? `
+        <div><label for="sucust">Full name</label><input id="sucust" name="custname" type="text" placeholder="Sam Field" required></div>
+        ` : `
+        <div><label for="subiz">Business name</label><input id="subiz" name="bizname" type="text" placeholder="Hilltop Growers" required></div>
+        <div><label for="suregion">Where you grow / make (region)</label><input id="suregion" name="region" type="text" placeholder="Cumbria, UK" required></div>
+        <div><label for="subio">What you'd like to sell (optional)</label><textarea id="subio" name="bio" rows="2" placeholder="Organic salad leaves and herbs, picked to order."></textarea></div>
+        `}
+        <div><label for="suemail">Email</label><input id="suemail" name="email" type="email" autocomplete="username" required></div>
+        <div><label for="supass">Password (8+ characters)</label><input id="supass" name="pass" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div><label for="supass2">Confirm password</label><input id="supass2" name="pass2" type="password" autocomplete="new-password" required></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:.3rem" type="submit">
+          ${role==='customer' ? 'Create account & start shopping' : 'Apply to sell on Shop Well'}
+        </button>
+      </form>
+      ${role==='supplier' ? `<p class="fine" style="margin-top:.8rem">Supplier applications are vetted by the Shop Well team (organic certification, food safety, shipping) before your listings can go live — you'll see your application status in the supplier portal.</p>` : ''}
+      <p class="auth-switch">Already have an account? <a href="#login">Sign in</a></p>
+    </div>
+  </div></section>`;
+}
+
 function vHome(){
   const featured = SUPPLIERS.filter(s=>s.status==='approved');
   return `
@@ -564,12 +794,12 @@ function vHome(){
     </div>
     <div>
       <div class="crate" aria-hidden="true">
-        <div class="tile" style="background:#FDE8E4">🍅</div>
-        <div class="tile" style="background:#EAF3E2">🥬</div>
-        <div class="tile" style="background:#FBEEC9">🥕</div>
-        <div class="tile" style="background:#F3E9DC">🥚</div>
-        <div class="tile" style="background:#FDE4EC">🍓</div>
-        <div class="tile" style="background:#EDE7F6">🍇</div>
+        <div class="tile" style="background:#FDE8E4"><img src="images/tomatoes.jpg" alt=""></div>
+        <div class="tile" style="background:#EAF3E2"><img src="images/cavolo-nero.jpg" alt=""></div>
+        <div class="tile" style="background:#FBEEC9"><img src="images/carrots.jpg" alt=""></div>
+        <div class="tile" style="background:#F3E9DC"><img src="images/eggs.jpg" alt=""></div>
+        <div class="tile" style="background:#FDE4EC"><img src="images/strawberries.jpg" alt=""></div>
+        <div class="tile" style="background:#EDE7F6"><img src="images/blackcurrant.jpg" alt=""></div>
       </div>
       <p class="crate-caption">In season this week from ${featured.length} certified suppliers</p>
     </div>
@@ -649,7 +879,7 @@ function vShop(){
         const tint = {Vegetables:'#EAF3E2',Fruit:'#FDE8E4','Dairy & Eggs':'#F3E9DC',Pantry:'#FBEEC9'}[p.cat]||'#EEF1EA';
         return `
         <article class="product">
-          <div class="art" style="background:${tint}" aria-hidden="true">${p.emoji}</div>
+          <div class="art" style="background:${tint}" aria-hidden="true">${prodArt(p)}</div>
           <div class="body">
             <h3>${esc(p.name)}</h3>
             <p class="from">From <b>${esc(s.name)}</b> · ${esc(s.region)}</p>
@@ -691,7 +921,7 @@ function vBasket(){
           <div class="sup-head"><span>${s.face} <b>${esc(s.name)}</b> · ships in ${esc(s.lead)}</span><span>Subtotal ${money(sub)}</span></div>
           ${groups[id].map(({p,q})=>`
             <div class="b-line">
-              <span aria-hidden="true">${p.emoji}</span>
+              ${prodThumb(p)}
               <span class="nm">${esc(p.name)} <span class="fine">· ${money(p.price)}/${esc(p.unit)}</span></span>
               <span class="qty">
                 <button aria-label="Reduce quantity of ${esc(p.name)}" onclick="setQty('${p.id}',${q-1})">−</button>
@@ -725,8 +955,8 @@ function vCheckout(){
     <form class="card" onsubmit="placeOrder(event)">
       <h3>Delivery details</h3>
       <div class="form-grid">
-        <div><label for="custname">Full name</label><input id="custname" name="custname" type="text" value="${esc(CUSTOMER.name)}" required></div>
-        <div><label for="custemail">Email for confirmations</label><input id="custemail" name="custemail" type="email" value="${esc(CUSTOMER.email)}" required></div>
+        <div><label for="custname">Full name</label><input id="custname" name="custname" type="text" value="${esc(state.user.name)}" required></div>
+        <div><label for="custemail">Email for confirmations</label><input id="custemail" name="custemail" type="email" value="${esc(state.user.email)}" required></div>
         <div class="full"><label for="addr1">Address</label><input id="addr1" name="addr1" type="text" placeholder="14 Orchard Lane" required></div>
         <div><label for="city">Town / city</label><input id="city" name="city" type="text" placeholder="Bristol" required></div>
         <div><label for="postcode">Postcode (UK launch only)</label><input id="postcode" name="postcode" type="text" placeholder="BS1 4ND" required></div>
@@ -779,7 +1009,7 @@ function shipmentCard(order, sh, supplierView){
       <span>${s.face} <b>${esc(s.name)}</b> ${supplierView?'· order <span class="mono">'+order.id+'</span>':''}</span>
       <span><span class="badge status ${sh.status}">${sh.status}</span>${sh.tracking?` <span class="mono">${sh.tracking}</span>`:''}</span>
     </div>
-    ${sh.items.map(i=>`<div class="b-line"><span aria-hidden="true">${prod(i.p).emoji}</span><span class="nm">${esc(prod(i.p).name)} × ${i.q}</span><b>${money(i.price*i.q)}</b></div>`).join('')
+    ${sh.items.map(i=>`<div class="b-line">${prodThumb(prod(i.p))}<span class="nm">${esc(prod(i.p).name)} × ${i.q}</span><b>${money(i.price*i.q)}</b></div>`).join('')
       || '<p class="fine">All items in this shipment were refunded.</p>'}
     ${supplierView && sh.status!=='Delivered' && sh.status!=='Refunded' ? `
       <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
@@ -792,10 +1022,10 @@ function shipmentCard(order, sh, supplierView){
 }
 
 function vAccount(){
-  const mine = [...ORDERS].reverse();
+  const mine = ORDERS.filter(o=>o.email===state.user.email).reverse();
   return `
   <section><h2>My orders</h2>
-  <p class="section-sub">Signed in as <b>${esc(CUSTOMER.name)}</b> · every shipment tracked per supplier.</p>
+  <p class="section-sub">Signed in as <b>${esc(state.user.name)}</b> (${esc(state.user.email)}) · every shipment tracked per supplier.</p>
   ${mine.length===0?'<div class="empty">No orders yet.</div>':mine.map(o=>`
     <div class="card" style="margin-bottom:1.2rem">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
@@ -809,7 +1039,22 @@ function vAccount(){
 }
 
 function vSupplier(){
-  const s = supp(state.portalSupplier);
+  const s = supp(state.user.sup);
+  // Suppliers who applied via sign-up wait here until the admin approves
+  // them — same queue the admin console has always managed.
+  if(s.status!=='approved'){
+    return `
+    <section><div class="auth-wrap">
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.4rem">🌱</div>
+        <h2>Application ${s.status==='pending'?'under review':'not approved'}</h2>
+        ${s.status==='pending'
+          ? `<p style="margin:.6rem 0">Thanks, <b>${esc(s.name)}</b> — the Shop Well team is reviewing your organic certification, food-safety registration and shipping details. You'll be able to create listings the moment you're approved.</p>
+             <p class="fine">For the demo: sign in as the admin and approve <b>${esc(s.name)}</b> in the console, then come back here.</p>`
+          : `<p style="margin:.6rem 0">Your application wasn't approved this time. The Shop Well team will have emailed the reasons and what to fix before reapplying.</p>`}
+      </div>
+    </div></section>`;
+  }
   const myProducts = PRODUCTS.filter(p=>p.sup===s.id);
   const myOrders = ORDERS.filter(o=>o.shipments.some(sh=>sh.sup===s.id)).reverse();
   const gross = myOrders.reduce((t,o)=>t+o.shipments.filter(sh=>sh.sup===s.id)
@@ -822,11 +1067,7 @@ function vSupplier(){
     <div class="portal-bar">
       <div><b style="font-family:var(--font-display);font-size:1.2rem">Supplier portal</b><br>
       <span style="font-size:.85rem;opacity:.9">Built for suppliers, not sysadmins — plain words, no jargon.</span></div>
-      <label style="color:#fff;margin:0">Signed in as&nbsp;
-        <select onchange="state.portalSupplier=this.value;render()" aria-label="Switch supplier account">
-          ${SUPPLIERS.filter(x=>x.status==='approved').map(x=>`<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)}</option>`).join('')}
-        </select>
-      </label>
+      <span>Signed in as <b>${esc(s.name)}</b> · ${esc(s.region)}</span>
     </div>
     <div class="stat-row">
       <div class="stat"><div class="v">${myProducts.length}</div><div class="l">Live listings</div></div>
@@ -845,7 +1086,7 @@ function vSupplier(){
         <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Best before</th><th>Shipping</th><th>Status</th></tr></thead>
         <tbody>${myProducts.map(p=>`
           <tr>
-            <td>${p.emoji} <b>${esc(p.name)}</b><br><span class="fine">${esc(p.desc)}</span></td>
+            <td>${prodThumb(p)} <b>${esc(p.name)}</b><br><span class="fine">${esc(p.desc)}</span></td>
             <td>£ <input class="inline-input" type="text" inputmode="decimal" value="${p.price.toFixed(2)}" aria-label="Price of ${esc(p.name)}" onchange="updatePrice('${p.id}',this.value)"> / ${esc(p.unit)}</td>
             <td><input class="inline-input" type="text" inputmode="numeric" value="${p.stock}" aria-label="Stock of ${esc(p.name)}" onchange="updateStock('${p.id}',this.value)"></td>
             <td>${esc(p.best)}</td><td>${esc(p.ship)}</td>
@@ -945,7 +1186,8 @@ function toggleChat(open){
   $('#chatPanel').classList.toggle('open', open);
   $('#chatFab').style.display = open?'none':'flex';
   if(open && $('#chatLog').children.length===0){
-    botSay('Hi '+CUSTOMER.name.split(' ')[0]+' 👋 I\u2019m Shop Well Assist. I can check your live orders, explain delivery, or hand you to a human for anything tricky. What do you need?');
+    const hi = state.user ? 'Hi '+state.user.name.split(' ')[0] : 'Hi there';
+    botSay(hi+' 👋 I\u2019m Shop Well Assist. I can check your live orders, explain delivery, or hand you to a human for anything tricky. What do you need?');
     renderChips();
   }
   if(open) $('#chatText').focus();
@@ -995,7 +1237,13 @@ function handleIntent(intent){
     case 'greet':
       botSay('Hello! Ask me about an order, delivery, or refunds — or tap a button below.'); break;
     case 'status': {
-      const o = [...ORDERS].reverse()[0];
+      // Only ever reads the signed-in customer's own orders (privacy
+      // guardrail from the requirements doc).
+      if(!state.user || state.user.role!=='customer'){
+        botSay('I can only show orders to their owner \u2014 sign in with your customer account and ask me again.');
+        break;
+      }
+      const o = ORDERS.filter(x=>x.email===state.user.email).reverse()[0];
       if(!o){ botSay('You don\u2019t have any orders yet — once you\u2019ve checked out I can track every shipment for you.'); break; }
       const lines = o.shipments.map(sh=>{
         const s = supp(sh.sup);
@@ -1038,9 +1286,15 @@ function escalate(reason){
 }
 
 // ---------- Init ----------
+loadRegistry();      // accounts created via sign-up (localStorage)
+restoreSession();    // stay signed in across reloads
 state.view = location.hash.replace('#','')||'home';
 updateBasketCount();
 render();
+
+// Exposed for the automated tests (tests/auth.test.mjs) — top-level
+// const declarations aren't reachable on window otherwise.
+window.__sw = {state, USERS, SUPPLIERS, PRODUCTS, ORDERS};
 </script>
 </body>
 </html>

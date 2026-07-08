@@ -1,0 +1,12 @@
+{
+  "name": "shopwell",
+  "private": true,
+  "description": "Shop Well prototype — the site itself needs no build step; this file only pins jsdom for the automated tests.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\""
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}

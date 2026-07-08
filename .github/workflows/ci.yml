@@ -3,8 +3,11 @@
 # What it does on every push / pull request:
 #   1. Checks out the code
 #   2. Syntax-checks the site's JavaScript (fails fast on typos)
-#   3. Builds the Docker image and smoke-tests that it serves the page
-#   4. On pushes to main only: publishes the image to GitHub Container
+#   3. Runs the automated auth/integration tests (jsdom drives the real
+#      page: login, sign-up, role guards, checkout, approval flow)
+#   4. Builds the Docker image and smoke-tests that it serves the page
+#      and the produce photos
+#   5. On pushes to main only: publishes the image to GitHub Container
 #      Registry (GHCR) so it can be pulled anywhere — the first half
 #      of stretch goal 2 (cloud deployment).
 
@@ -37,14 +40,20 @@ jobs:
           node --check app.js
           echo "JavaScript OK"
 
+      - name: Run automated tests (login, sign-up, role guards, checkout)
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+
       - name: Build Docker image
         run: docker build -t shopwell:ci .
 
-      - name: Smoke test — container serves the homepage
+      - name: Smoke test — container serves the homepage and photos
         run: |
           docker run -d --rm -p 8080:80 --name shopwell shopwell:ci
           sleep 2
           curl -sf http://localhost:8080 | grep -q "Shop Well" && echo "Site is up"
+          curl -sfo /dev/null http://localhost:8080/images/carrots.jpg && echo "Images served"
           docker stop shopwell
 
       - name: Log in to GitHub Container Registry
